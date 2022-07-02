@@ -34,32 +34,32 @@ services:
       WATCHTOWER_TIMEOUT: 30s
     #command: --interval 600
 
-  server_online:
+  first_server:
     depends_on:
       - traefik
     image: nginx:latest
-    container_name: ${CONTAINER_ONLINE}
+    container_name: ${FIRST_CONTAINER}
     volumes:
-      - ${VOLUME_ONLINE}:/usr/share/nginx/html
+      - ${FIRST_VOLUME}:/usr/share/nginx/html
     restart: always
     labels:
       - traefik.enable=true
-      - traefik.http.routers.server_online.entrypoints=websecure
-      - traefik.http.routers.server_online.rule=Host(`${DOMAIN_ONLINE}`)
-      - traefik.http.routers.server_online.tls=true
-      - traefik.http.routers.server_online.tls.certresolver=cert_resolver
+      - traefik.http.routers.first_server.entrypoints=websecure
+      - traefik.http.routers.first_server.rule=Host(`${FIRST_DOMAIN}`)
+      - traefik.http.routers.first_server.tls=true
+      - traefik.http.routers.first_server.tls.certresolver=cert_resolver
 
-  server_dev:
+  second_server:
     depends_on:
       - traefik
     image: nginx:latest
-    container_name: ${CONTAINER_DEV}
+    container_name: ${SECOND_CONTAINER}
     volumes:
-      - ${VOLUME_DEV}:/usr/share/nginx/html
+      - ${SECOND_VOLUME}:/usr/share/nginx/html
     restart: always
     labels:
       - traefik.enable=true
-      - traefik.http.routers.server_dev.entrypoints=websecure
-      - traefik.http.routers.server_dev.rule=Host(`${DOMAIN_DEV}`)
-      - traefik.http.routers.server_dev.tls=true
-      - traefik.http.routers.server_dev.tls.certresolver=cert_resolver
+      - traefik.http.routers.second_server.entrypoints=websecure
+      - traefik.http.routers.second_server.rule=Host(`${SECOND_DOMAIN}`)
+      - traefik.http.routers.second_server.tls=true
+      - traefik.http.routers.second_server.tls.certresolver=cert_resolver
