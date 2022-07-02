@@ -1,0 +1,65 @@
+services:
+
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: #- --log.level=DEBUG
+      - --providers.docker=true
+      # Containers that do not have a "traefik.enable=true" are ignored from the resulting routing
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.cert_resolver.acme.httpchallenge=true
+      - --certificatesresolvers.cert_resolver.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.cert_resolver.acme.email=${EMAIL}
+      - --certificatesresolvers.cert_resolver.acme.storage=/letsencrypt/acme.json
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_CLEANUP: true
+      WATCHTOWER_SCHEDULE: "0 0 0 * * *"
+      WATCHTOWER_TIMEOUT: 30s
+    #command: --interval 600
+
+  server_online:
+    depends_on:
+      - traefik
+    image: nginx:latest
+    container_name: ${CONTAINER_ONLINE}
+    volumes:
+      - ${VOLUME_ONLINE}:/usr/share/nginx/html
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.server_online.entrypoints=websecure
+      - traefik.http.routers.server_online.rule=Host(`${DOMAIN_ONLINE}`)
+      - traefik.http.routers.server_online.tls=true
+      - traefik.http.routers.server_online.tls.certresolver=cert_resolver
+
+  server_dev:
+    depends_on:
+      - traefik
+    image: nginx:latest
+    container_name: ${CONTAINER_DEV}
+    volumes:
+      - ${VOLUME_DEV}:/usr/share/nginx/html
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.server_dev.entrypoints=websecure
+      - traefik.http.routers.server_dev.rule=Host(`${DOMAIN_DEV}`)
+      - traefik.http.routers.server_dev.tls=true
+      - traefik.http.routers.server_dev.tls.certresolver=cert_resolver
